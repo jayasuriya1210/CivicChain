@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Get Your QR - Voting System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Montserrat', sans-serif; margin: 0; background: #f6f9fc; }
+    .container { max-width: 900px; margin: 40px auto; padding: 20px; }
+    .card { background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); padding: 24px; }
+    h1 { margin: 0 0 8px; }
+    p.sub { color: #555; margin-top: 0; }
+    .form { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 14px 0; }
+    input, button { padding: 12px 14px; border-radius: 10px; border: 1px solid #ddd; }
+    button { background: linear-gradient(to right, #FF9933, #138808); color: #fff; border: none; cursor: pointer; }
+    .status { margin-top: 10px; font-weight: 600; }
+    .qr-wrap { margin-top: 16px; text-align: center; }
+    .qr-wrap img { max-width: 260px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Get Your Unique QR</h1>
+      <p class="sub">Provide your identifier (email, Aadhar, or wallet) to bind a unique login QR.</p>
+      <div class="form">
+        <input id="externalId" placeholder="Enter identifier (optional)" />
+        <button id="issueBtn">Generate QR</button>
+      </div>
+      <div id="status" class="status">Ready.</div>
+      <div class="qr-wrap"><img id="qrImg" alt="Your QR will appear here" /></div>
+      <p class="sub">Keep this QR private. You'll use it to authenticate from the QR Login page.</p>
+    </div>
+  </div>
+  <script>
+    var statusEl = document.getElementById('status');
+    var qrImg = document.getElementById('qrImg');
+    var btn = document.getElementById('issueBtn');
+    var externalIdEl = document.getElementById('externalId');
+
+    function setStatus(t){ statusEl.textContent = t; }
+
+    btn.addEventListener('click', function(){
+      setStatus('Requesting QR…');
+      fetch('http://localhost:5000/issue-qr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ external_id: externalIdEl.value || null })
+      }).then(function(res){
+        if (!res.ok) throw new Error('Failed to issue QR');
+        return res.blob();
+      }).then(function(blob){
+        var url = URL.createObjectURL(blob);
+        qrImg.src = url;
+        setStatus('QR generated. Save it securely.');
+      }).catch(function(err){
+        setStatus('Error: ' + (err && err.message ? err.message : err));
+      });
+    });
+  </script>
+</body>
+</html>

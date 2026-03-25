@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard – QR Voting System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f0f1a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        /* Layout */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.04);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 14px 28px;
+        }
+
+        .topbar h1 {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #22c55e;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .4;
+            }
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #aaa;
+            padding: 7px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .monitor-link {
+            color: #9bd3ff;
+            text-decoration: none;
+            font-size: 13px;
+            border: 1px solid rgba(155, 211, 255, 0.35);
+            padding: 7px 10px;
+            border-radius: 8px;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 28px 20px;
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.45);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .c-blue {
+            color: #667eea;
+        }
+
+        .c-yellow {
+            color: #facc15;
+        }
+
+        .c-green {
+            color: #22c55e;
+        }
+
+        .c-red {
+            color: #f87171;
+        }
+
+        /* Panels */
+        .panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media(max-width:800px) {
+            .panels {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-header h2 {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .count-badge {
+            background: rgba(250, 204, 21, 0.15);
+            color: #facc15;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+
+        .panel-body {
+            padding: 16px;
+            max-height: 480px;
+            overflow-y: auto;
+        }
+
+        /* Queue items */
+        .voter-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            animation: slideIn .3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .voter-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .voter-name {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
+
+        .voter-meta {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.45);
+            margin-bottom: 12px;
+            line-height: 1.7;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all .2s;
+        }
+
+        .btn-approve {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #fff;
+        }
+
+        .btn-approve:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
+        }
+
+        .btn-reject {
+            background: rgba(248, 113, 113, 0.15);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: #f87171;
+        }
+
+        .btn-reject:hover {
+            background: rgba(248, 113, 113, 0.25);
+        }
+
+        /* Log */
+        .log-item {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 13px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .log-item:last-child {
+            border-bottom: none;
+        }
+
+        .log-icon {
+            font-size: 16px;
+            margin-top: 1px;
+        }
+
+        .log-text {
+            color: rgba(255, 255, 255, 0.65);
+            line-height: 1.5;
+        }
+
+        .log-time {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 11px;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+
+        .empty {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 13px;
+            padding: 32px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="topbar">
+        <h1>🗳️ Admin Dashboard</h1>
+        <div class="topbar-right">
+            <div class="live-badge">
+                <div class="live-dot"></div>LIVE
+            </div>
+            <a class="monitor-link" href="/monitor/dashboard" target="_blank">Vote Monitor</a>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <main>
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-num c-blue" id="sTotalVoters">—</div>
+                <div class="stat-label">Total Registered</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num c-yellow" id="sPending">—</div>
+                <div class="stat-label">Pending Approval</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num c-green" id="sVoted">—</div>
+                <div class="stat-label">Votes Cast</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num c-red" id="sRejected">—</div>
+                <div class="stat-label">Rejected</div>
+            </div>
+        </div>
+
+        <div class="panels">
+            <!-- Pending Queue -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>⏳ Pending Approvals</h2>
+                    <span class="count-badge" id="pendingCount">0</span>
+                </div>
+                <div class="panel-body" id="pendingList">
+                    <div class="empty">No pending verifications</div>
+                </div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>📋 Activity Log</h2>
+                </div>
+                <div class="panel-body" id="activityLog">
+                    <div class="empty">No activity yet</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const socket = io();
+        const adminId = 'ADMIN-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+
+        // Auth guard
+        if (!localStorage.getItem('adminToken')) {
+            window.location.href = '/admin/login';
+        }
+
+        // Socket events
+        socket.on('connect', () => {
+            socket.emit('join-dashboard', adminId);
+            logActivity('🟢', 'Connected to real-time server');
+        });
+        socket.on('disconnect', () => logActivity('🔴', 'Disconnected from server'));
+        socket.on('qr:scanned', (data) => {
+            logActivity('📥', `QR scanned — Voter: ${data.voterId || 'unknown'}`);
+            loadPending();
+        });
+        socket.on('vote:cast', (data) => {
+            logActivity('✅', `Vote cast — Voter: ${data.voterId || 'unknown'}`);
+            loadStats();
+        });
+
+        function logout() {
+            localStorage.removeItem('adminToken');
+            window.location.href = '/admin/login';
+        }
+
+        async function loadStats() {
+            try {
+                const [sv, ss] = await Promise.all([
+                    fetch('/voter/stats/summary').then(r => r.json()),
+                    fetch('/admin/stats').then(r => r.json())
+                ]);
+                document.getElementById('sTotalVoters').textContent = sv.stats?.totalVoters ?? '—';
+                document.getElementById('sVoted').textContent = sv.stats?.votersWhoVoted ?? '—';
+                document.getElementById('sRejected').textContent = sv.stats?.rejectedVoters ?? '—';
+                document.getElementById('sPending').textContent = ss.stats?.pendingCount ?? '—';
+            } catch (e) { }
+        }
+
+        async function loadPending() {
+            try {
+                const r = await fetch('/admin/pending-verifications?limit=50');
+                const d = await r.json();
+                const sessions = d.sessions || [];
+                document.getElementById('pendingCount').textContent = sessions.length;
+                const list = document.getElementById('pendingList');
+
+                if (sessions.length === 0) {
+                    list.innerHTML = '<div class="empty">No pending verifications</div>';
+                    return;
+                }
+
+                list.innerHTML = sessions.map(s => `
+          <div class="voter-card" id="session-${s.sessionId}">
+            <div class="voter-name">👤 ${s.voterDetails?.name || s.voterId}</div>
+            <div class="voter-meta">
+              ID: ${s.voterId}<br>
+              Constituency: ${s.voterDetails?.constituency || '—'}<br>
+              Booth: ${s.boothId}<br>
+              Arrived: ${new Date(s.createdAt).toLocaleTimeString()}
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-approve" onclick="decide('${s.sessionId}','approve')">✅ Approve</button>
+              <button class="btn btn-reject" onclick="decide('${s.sessionId}','reject')">❌ Reject</button>
+            </div>
+          </div>
+        `).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        async function decide(sessionId, action) {
+            const btn = document.querySelector(`#session-${sessionId} .btn-${action === 'approve' ? 'approve' : 'reject'}`);
+            if (btn) { btn.disabled = true; btn.textContent = action === 'approve' ? '⏳ Approving...' : '⏳ Rejecting...'; }
+
+            try {
+                const r = await fetch('/admin/verify', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, action, adminId, reason: action === 'reject' ? 'ID mismatch' : undefined })
+                });
+                const d = await r.json();
+
+                if (r.ok) {
+                    document.getElementById('session-' + sessionId)?.remove();
+                    logActivity(action === 'approve' ? '✅' : '❌', `${action === 'approve' ? 'Approved' : 'Rejected'} — session ${sessionId.slice(0, 8)}…`);
+                    if (action === 'approve') {
+                        logActivity('🗳️', `Voting token issued. Voter may now cast vote.`);
+                        if (d.votingToken) {
+                            const voteUrl = `/vote/screen?token=${encodeURIComponent(d.votingToken)}`;
+                            logActivity('🔗', `Open voting screen: ${voteUrl}`);
+                            localStorage.setItem('latestVotingToken', d.votingToken);
+                        }
+                    }
+                    loadStats();
+                    if (document.getElementById('pendingList').children.length === 0) {
+                        document.getElementById('pendingList').innerHTML = '<div class="empty">No pending verifications</div>';
+                    }
+                } else {
+                    logActivity('⚠️', d.error || 'Action failed');
+                }
+            } catch (e) {
+                logActivity('❌', 'Network error: ' + e.message);
+            }
+        }
+
+        function logActivity(icon, text) {
+            const log = document.getElementById('activityLog');
+            const empty = log.querySelector('.empty');
+            if (empty) empty.remove();
+
+            const item = document.createElement('div');
+            item.className = 'log-item';
+            item.innerHTML = `<span class="log-icon">${icon}</span><span class="log-text">${text}</span><span class="log-time">${new Date().toLocaleTimeString()}</span>`;
+            log.prepend(item);
+
+            // Keep only latest 30 log entries
+            const items = log.querySelectorAll('.log-item');
+            if (items.length > 30) items[items.length - 1].remove();
+        }
+
+        // Initial load
+        loadStats();
+        loadPending();
+        // Poll every 5 seconds for new pending verifications
+        setInterval(() => { loadPending(); loadStats(); }, 5000);
+    </script>
+</body>
+
+</html>

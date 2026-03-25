@@ -1,0 +1,25 @@
+{
+  "name": "mini-voting-blockchain",
+  "version": "1.0.0",
+  "description": "Smart contracts for Mini Voting System",
+  "main": "truffle-config.js",
+  "scripts": {
+    "compile": "truffle compile",
+    "migrate": "truffle migrate --network ganache",
+    "deploy": "truffle migrate --network ganache --reset",
+    "test": "truffle test"
+  },
+  "keywords": [
+    "voting",
+    "blockchain",
+    "ethereum",
+    "solidity"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@truffle/contract": "^4.6.0",
+    "@truffle/hdwallet-provider": "^2.0.0",
+    "truffle": "^5.9.0"
+  }
+}

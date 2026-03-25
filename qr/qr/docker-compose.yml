@@ -1,0 +1,39 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: qr-voting-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    networks:
+      - qr-voting-network
+
+  app:
+    build: .
+    container_name: qr-voting-app
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://root:password@mongodb:27017/voting-system
+      PORT: 3001
+      BASE_URL: http://localhost:3001
+      JWT_SECRET: your-secure-jwt-secret-key-change-in-production
+      VOTING_SECRET: your-secure-voting-secret-key-change-in-production
+      CORS_ORIGIN: "*"
+    depends_on:
+      - mongodb
+    networks:
+      - qr-voting-network
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+
+networks:
+  qr-voting-network:
+    driver: bridge

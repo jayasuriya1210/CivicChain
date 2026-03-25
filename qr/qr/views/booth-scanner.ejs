@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Polling Booth Scanner - QR Voting System</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .scanner-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+
+    .scanner-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .scanner-header h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .booth-info {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .scanner-content {
+      padding: 30px;
+    }
+
+    .camera-container {
+      position: relative;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      aspect-ratio: 1;
+    }
+
+    #cameraFeed {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .scanner-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      height: 80%;
+      border: 3px solid #fff;
+      border-radius: 12px;
+      box-shadow: inset 0 0 0 9999px rgba(0, 0, 0, 0.5);
+      display: none;
+    }
+
+    .scanner-overlay.active {
+      display: block;
+    }
+
+    .camera-error {
+      display: none;
+      background: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .camera-error.show {
+      display: block;
+    }
+
+    .instructions {
+      background: #e7f3ff;
+      color: #004085;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .instructions ul {
+      margin-left: 20px;
+      margin-top: 10px;
+    }
+
+    .instructions li {
+      margin: 8px 0;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #5a6268;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .result-card {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .result-card.show {
+      display: block;
+    }
+
+    .result-success {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+
+    .result-error {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+
+    .result-info {
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+      color: #0c5460;
+    }
+
+    .result-content {
+      margin-top: 10px;
+    }
+
+    .result-field {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      font-size: 14px;
+    }
+
+    .result-field:last-child {
+      border-bottom: none;
+    }
+
+    .result-label {
+      font-weight: 600;
+      color: #666;
+    }
+
+    .result-value {
+      color: #333;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #dc3545;
+    }
+
+    .status-dot.connected {
+      background: #28a745;
+    }
+
+    .status-text {
+      color: #666;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .modal-message {
+      color: #666;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    @media (max-width: 600px) {
+      .scanner-header h1 {
+        font-size: 22px;
+      }
+
+      .scanner-content {
+        padding: 20px;
+      }
+
+      .button-group {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="scanner-card">
+      <div class="scanner-header">
+        <h1>🎫 QR Code Scanner</h1>
+        <div class="booth-info">Booth ID: <span id="boothId">Loading...</span></div>
+      </div>
+
+      <div class="scanner-content">
+        <!-- Instructions -->
+        <div class="instructions">
+          <strong>✓ Instructions:</strong>
+          <ul>
+            <li>Align QR code within the frame</li>
+            <li>Ensure good lighting for accurate scanning</li>
+            <li>Hold steady for 2-3 seconds</li>
+          </ul>
+        </div>
+
+        <!-- Camera or File Input -->
+        <div class="camera-error" id="cameraError"></div>
+
+        <!-- Camera Feed -->
+        <div class="camera-container" id="cameraContainer">
+          <video id="cameraFeed" autoplay playsinline></video>
+          <div class="scanner-overlay active"></div>
+        </div>
+
+        <!-- Manual Input Option -->
+        <div style="display: none; margin-bottom: 20px;" id="manualInputSection">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+            Or enter token manually:
+          </label>
+          <input 
+            type="text" 
+            id="manualToken" 
+            class="input-field" 
+            placeholder="Paste QR token here"
+            onpaste="handlePaste()"
+          >
+        </div>
+
+        <!-- Button Group -->
+        <div class="button-group">
+          <button class="btn btn-primary" id="startBtn" onclick="startScanning()">
+            Start Scanning
+          </button>
+          <button class="btn btn-secondary" id="stopBtn" onclick="stopScanning()" style="display: none;">
+            Stop Scanning
+          </button>
+        </div>
+
+        <!-- Result Display -->
+        <div class="result-card" id="resultCard">
+          <div id="resultContent"></div>
+        </div>
+
+        <!-- Status Indicator -->
+        <div class="status-indicator">
+          <div class="status-dot" id="statusDot"></div>
+          <span class="status-text" id="statusText">Disconnected</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Waiting Modal -->
+  <div class="modal" id="waitingModal">
+    <div class="modal-content">
+      <div class="loading-spinner" style="margin: 0 auto 15px;"></div>
+      <div class="modal-title">Awaiting Admin Verification</div>
+      <div class="modal-message">
+        Your QR code has been scanned and sent to the admin for verification.
+        <br><br>
+        Please wait for approval...
+      </div>
+    </div>
+  </div>
+
+  <!-- Verification Complete Modal -->
+  <div class="modal" id="verificationModal">
+    <div class="modal-content">
+      <div style="font-size: 48px; margin-bottom: 15px;" id="verificationIcon">✓</div>
+      <div class="modal-title" id="verificationTitle">Verification Approved</div>
+      <div class="modal-message" id="verificationMessage">
+        You have been verified and can now proceed to vote.
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="proceedToVoting()">Proceed to Voting</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/js/booth-scanner.js"></script>
+</body>
+</html>

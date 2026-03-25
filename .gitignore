@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+**/node_modules/
+venv/
+.venv/
+**/venv/
+**/.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.pytest_cache/
+.mypy_cache/
+
+# Environments and secrets
+.env
+.env.*
+!.env.example
+
+# Build / coverage
+build/
+dist/
+coverage/
+*.log
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Blockchain artifacts (reproducible)
+**/artifacts/
+**/cache/

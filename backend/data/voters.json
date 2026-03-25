@@ -1,0 +1,24 @@
+{
+  "718123530480": {
+    "voterId": "718123530480",
+    "address": "",
+    "isVerified": true,
+    "hasVoted": false,
+    "createdAt": "2026-02-24T00:00:00.000Z"
+  },
+  "718123530030": {
+    "voterId": "718123530030",
+    "address": "",
+    "isVerified": true,
+    "hasVoted": false,
+    "createdAt": "2026-02-24T00:00:00.000Z"
+  },
+  "718123530240": {
+    "voterId": "718123530240",
+    "address": "",
+    "isVerified": true,
+    "hasVoted": false,
+    "createdAt": "2026-02-24T00:00:00.000Z",
+    "qrVerified": false
+  }
+}

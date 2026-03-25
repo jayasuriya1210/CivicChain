@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Mini Voting System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Theme Colors */
+        :root {
+            --saffron: #3b82f6;
+            --white: #FFFFFF;
+            --green: #2563eb;
+            --navy: #0f172a;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+        }
+
+        .admin-login-container {
+            width: 100%;
+            max-width: none;
+            min-height: calc(100vh - 40px);
+            margin: 20px auto;
+            padding: 40px;
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255,255,255,0.08);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .admin-login-container::before {
+            content: '';
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3em;
+            color: var(--navy);
+        }
+
+        .admin-login-container h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .admin-login-container p {
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            color: var(--navy);
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: all 0.3s;
+            color: var(--navy);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--green);
+            box-shadow: 0 0 10px rgba(37, 99, 235, 0.3);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+
+        .btn-login {
+            background: var(--green);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .btn-login:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-back {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+            font-weight: 600;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: var(--white);
+        }
+
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .info-box {
+            display: none;
+        }
+
+        .lock-icon {
+            text-align: center;
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        /* Admin Dashboard Styles */
+        .admin-dashboard {
+            width: 100%;
+            max-width: none;
+            min-height: calc(100vh - 40px);
+            margin: 20px auto;
+            padding: 30px;
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .admin-dashboard::before {
+            content: '';
+            display: block;
+            text-align: center;
+            font-size: 2.5em;
+            color: var(--navy);
+            margin-bottom: 20px;
+        }
+
+        .admin-header {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-header h1 {
+            flex: 1;
+            margin: 0;
+        }
+
+        .logout-link {
+            color: white;
+            background: linear-gradient(135deg, #334155 0%, #0f172a 100%);
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.2);
+            font-weight: bold;
+        }
+
+        .logout-link:hover {
+            background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .admin-tabs button {
+            padding: 12px 20px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .admin-tabs button.active {
+            color: white;
+            border-bottom-color: var(--green);
+            font-weight: 600;
+        }
+
+        .admin-tabs button:hover {
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .form-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-card h3 {
+            color: var(--navy);
+            margin-top: 0;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .form-card label {
+            color: var(--navy);
+            font-weight: 600;
+        }
+
+        .form-card input,
+        .form-card select,
+        .form-card textarea {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #d1d5db;
+            color: var(--navy);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .form-card input:focus,
+        .form-card select:focus,
+        .form-card textarea:focus {
+            outline: none;
+            border-color: var(--green);
+            box-shadow: 0 0 10px rgba(37, 99, 235, 0.3);
+        }
+
+        .form-card input::placeholder,
+        .form-card textarea::placeholder {
+            color: rgba(0, 75, 135, 0.5);
+        }
+
+        .form-card button {
+            background: linear-gradient(135deg, var(--green) 0%, #1d4ed8 100%);
+            color: white;
+            font-weight: 600;
+        }
+
+        .form-card button:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, var(--green) 100%);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-left: 4px solid var(--green);
+            padding: 20px;
+            border-radius: 8px;
+            color: var(--navy);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            opacity: 0;
+            animation: shine 0.6s ease-in-out;
+        }
+
+        .stat-card.pulse {
+            animation: pulse-border 0.6s ease-out;
+        }
+
+        .stat-card.pulse::after {
+            animation: shine 0.6s ease-in-out;
+        }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(19, 136, 8, 0.7); }
+            50% { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1), 0 0 0 15px rgba(19, 136, 8, 0); }
+            100% { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(19, 136, 8, 0); }
+        }
+
+        @keyframes shine {
+            0% { opacity: 0; transform: translateX(-100%); }
+            50% { opacity: 1; }
+            100% { opacity: 0; transform: translateX(100%); }
+        }
+
+        .stat-card h4 {
+            margin: 0 0 10px 0;
+            opacity: 0.7;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            color: #334155;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: linear-gradient(135deg, var(--green) 0%, #1d4ed8 100%);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: bold;
+            animation: blink 1s infinite;
+        }
+
+        .live-badge.active {
+            animation: blink 0.6s infinite;
+        }
+
+        @keyframes blink {
+            0%, 49%, 100% { opacity: 1; }
+            50%, 99% { opacity: 0.6; }
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: white;
+            animation: pulse-dot 1s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.7); opacity: 0.7; }
+        }
+
+        .stat-card .value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: var(--green);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card .value.update {
+            animation: float-up 0.5s ease;
+        }
+
+        @keyframes float-up {
+            0% { transform: translateY(10px); opacity: 0.7; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        .stat-card .subtitle {
+            margin-top: 8px;
+            font-size: 0.8em;
+            color: #999;
+        }
+
+        .last-updated {
+            font-size: 0.75em;
+            color: var(--green);
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        .success {
+            background: linear-gradient(135deg, var(--green) 0%, #1d4ed8 100%);
+            border-left: 4px solid var(--green);
+            padding: 15px;
+            border-radius: 5px;
+            color: white;
+            margin-bottom: 15px;
+            display: none;
+            font-weight: 600;
+        }
+
+        .success.show {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .admin-login-container {
+                margin: 40px 20px;
+            }
+
+            .admin-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .admin-tabs {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body class="admin-page">
+    <div class="admin-login" id="adminLogin">
+        <div class="admin-login-container">
+            <div class="lock-icon">🔐</div>
+            <h1>Admin Panel</h1>
+            <p>Secure Access for Election Administrators</p>
+            
+            <div class="error" id="loginError"></div>
+
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label for="adminUsername">Username</label>
+                    <input 
+                        type="text" 
+                        id="adminUsername" 
+                        placeholder="Enter admin username"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="adminPassword">Password</label>
+                    <input 
+                        type="password" 
+                        id="adminPassword" 
+                        placeholder="Enter admin password"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="btn-login">Login to Admin Panel</button>
+                <button type="button" class="btn-back" onclick="window.location.href='/'">
+                    ← Back to Voting
+                </button>
+            </form>
+
+            <div class="info-box">
+                <strong>⚠️ Admin Access Only</strong><br>
+                This panel is restricted to authorized administrators.<br>
+                Default: username: <code>admin</code> | password: <code>admin@123</code>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-dashboard" id="adminDashboard" style="display: none;">
+        <div class="admin-header">
+            <h1>📊 Admin Dashboard</h1>
+            <button class="logout-link" onclick="adminLogout()">Logout</button>
+        </div>
+
+        <div class="admin-tabs">
+            <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
+            <button class="tab-btn" onclick="switchTab('candidates')">Add Candidate</button>
+            <button class="tab-btn" onclick="switchTab('schedule')">Voting Schedule</button>
+            <button class="tab-btn" onclick="switchTab('results')">View Results</button>
+            <button class="tab-btn" onclick="switchTab('qr-approvals')">QR Approvals</button>
+            <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div class="tab-content active" id="dashboard">
+            <button onclick="forceRefreshDashboard()" style="width: 100%; padding: 12px; margin-bottom: 20px; background: linear-gradient(135deg, var(--green) 0%, #1d4ed8 100%); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; font-weight: bold; font-size: 1em; cursor: pointer;">
+                🔄 Refresh Dashboard Now
+            </button>
+            <button onclick="resetVotingData()" style="width: 100%; padding: 12px; margin-bottom: 20px; background: linear-gradient(135deg, #334155 0%, #0f172a 100%); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; font-weight: bold; font-size: 1em; cursor: pointer;">
+                ♻️ Restart Voting (Allow Everyone to Vote Again)
+            </button>
+            <div class="stats-grid">
+                <div class="stat-card" id="candidatesCard">
+                    <h4>
+                        Total Candidates
+                        <span class="live-badge" id="candidatesBadge">
+                            <span class="live-dot"></span> LIVE
+                        </span>
+                    </h4>
+                    <div class="value" id="totalCandidatesAdmin">0</div>
+                    <div class="last-updated" id="candidatesTime">Last updated: Just now</div>
+                </div>
+                <div class="stat-card" id="votesCard">
+                    <h4>
+                        Total Votes
+                        <span class="live-badge" id="votesBadge">
+                            <span class="live-dot"></span> LIVE
+                        </span>
+                    </h4>
+                    <div class="value" id="totalVotesAdmin">0</div>
+                    <div class="subtitle">Votes cast so far</div>
+                    <div class="last-updated" id="votesTime">Last updated: Just now</div>
+                </div>
+                <div class="stat-card" id="votersCard">
+                    <h4>
+                        Registered Voters
+                        <span class="live-badge" id="votersBadge">
+                            <span class="live-dot"></span> LIVE
+                        </span>
+                    </h4>
+                    <div class="value" id="totalVotersAdmin">0</div>
+                    <div class="subtitle" id="voterParticipation">Participation: 0%</div>
+                    <div class="last-updated" id="votersTime">Last updated: Just now</div>
+                </div>
+                <div class="stat-card" id="statusCard">
+                    <h4>
+                        Voting Status
+                        <span class="live-badge" id="statusBadge">
+                            <span class="live-dot"></span> LIVE
+                        </span>
+                    </h4>
+                    <div class="value" id="votingStatusAdmin">Inactive</div>
+                    <div class="subtitle" id="statusSubtitle">Election has not started</div>
+                    <div class="last-updated" id="statusTime">Last updated: Just now</div>
+                </div>
+            </div>
+
+            <!-- Live Results Panel on Dashboard -->
+            <div style="margin-top: 30px;">
+                <div class="form-card">
+                    <h3>📊 Live Vote Count</h3>
+                    <div id="dashboardResultsList" style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+                        Loading candidates...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Candidate Tab -->
+        <div class="tab-content" id="candidates">
+            <div class="form-card">
+                <h3>➕ Add New Candidate</h3>
+                <div class="success" id="candidateSuccess"></div>
+                <form id="addCandidateForm" onsubmit="addCandidate(event)">
+                    <div class="form-group">
+                        <label for="candidateName">Candidate Name</label>
+                        <input type="text" id="candidateName" placeholder="Full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="partyName">Party Name</label>
+                        <input type="text" id="partyName" placeholder="Political party name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="partySymbol">Party Symbol</label>
+                        <input type="text" id="partySymbol" placeholder="e.g., 🔱, 🙏, 🌾" required>
+                    </div>
+                    <button type="submit">Add Candidate</button>
+                </form>
+
+            </div>
+        </div>
+
+        <!-- Voting Schedule Tab -->
+        <div class="tab-content" id="schedule">
+            <div class="form-card">
+                <h3>📅 Set Voting Schedule</h3>
+                <div class="success" id="scheduleSuccess"></div>
+                <form id="setScheduleForm" onsubmit="setVotingSchedule(event)">
+                    <div class="form-group">
+                        <label for="electionTitle">Election Title</label>
+                        <input type="text" id="electionTitle" placeholder="e.g., General Elections 2026" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="startTime">Start Date & Time</label>
+                        <input type="datetime-local" id="startTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endTime">End Date & Time</label>
+                        <input type="datetime-local" id="endTime" required>
+                    </div>
+                    <button type="submit">Set Schedule</button>
+                </form>
+                <button onclick="endVoting()" style="background: linear-gradient(135deg, #334155 0%, #0f172a 100%); width: 100%; margin-top: 10px; border: 1px solid rgba(255,255,255,0.2);">
+                    End Voting Now
+                </button>
+            </div>
+        </div>
+
+        <!-- View Results Tab -->
+        <div class="tab-content" id="results">
+            <div class="form-card">
+                <h3>📈 Live Results</h3>
+                <div id="resultsList" style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+                    Loading results...
+                </div>
+            </div>
+        </div>
+
+        <!-- QR Approvals Tab -->
+        <div class="tab-content" id="qr-approvals">
+            <div class="form-card">
+                <h3>✅ QR Approvals (QR Module)</h3>
+                <p style="color:#333; margin-bottom: 12px;">
+                    Use this panel to approve or reject QR verification requests.
+                </p>
+                <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+                    <button onclick="openQrAdmin()" style="padding: 10px 14px; border-radius: 8px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer;">
+                        Open QR Admin in New Tab
+                    </button>
+                    <button onclick="reloadQrFrame()" style="padding: 10px 14px; border-radius: 8px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer;">
+                        Reload QR Panel
+                    </button>
+                </div>
+                <div style="border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; height: 70vh;">
+                    <iframe id="qrAdminFrame" title="QR Admin Dashboard" src="http://localhost:3000/admin/dashboard" style="width: 100%; height: 100%; border: 0;"></iframe>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div class="tab-content" id="settings">
+            <div class="form-card">
+                <h3>⚙️ Admin Settings</h3>
+                <div class="success" id="settingsSuccess"></div>
+                <form id="changePasswordForm" onsubmit="changePassword(event)">
+                    <div class="form-group">
+                        <label for="oldPassword">Current Password</label>
+                        <input type="password" id="oldPassword" placeholder="Enter current password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" id="newPassword" placeholder="Enter new password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" placeholder="Confirm new password" required>
+                    </div>
+                    <button type="submit">Change Password</button>
+                </form>
+            </div>
+
+            <div class="form-card" style="margin-top: 20px; border: 1px solid #e5e7eb;">
+                <h3 style="color: #0f172a;">⚠️ Reset Voting Data</h3>
+                <p style="color: #333; margin-bottom: 15px;">
+                    This will reset all votes and allow voters to vote again from the beginning. 
+                    <strong>This action cannot be undone!</strong>
+                </p>
+                <button onclick="resetVotingData()" style="background: linear-gradient(135deg, #334155 0%, #0f172a 100%); width: 100%; border: 1px solid rgba(255,255,255,0.2);">
+                    🔄 Reset All Voting Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let adminToken = null;
+        let ws = null;
+        let statsRefreshInterval = null;
+        let lastStatsValues = {
+            totalCandidates: 0,
+            totalVotes: 0,
+            totalVoters: 0,
+            votingStatus: 'Inactive'
+        };
+
+        // Get current time formatted
+        function getTimeString() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
+        }
+
+        // Animate value change with pulse effect
+        function animateStatCard(cardId, isUpdate = false) {
+            const card = document.getElementById(cardId);
+            if (!card) return;
+            
+            if (isUpdate) {
+                card.classList.add('pulse');
+                setTimeout(() => card.classList.remove('pulse'), 600);
+            }
+
+            const valueElement = card.querySelector('.value');
+            if (valueElement) {
+                valueElement.classList.add('update');
+                setTimeout(() => valueElement.classList.remove('update'), 500);
+            }
+        }
+
+        // Connect to WebSocket for real-time updates
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//localhost:5000`);
+
+            ws.onopen = () => {
+                console.log('✓ Connected to live updates');
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                
+                if (message.type === 'vote-cast') {
+                    console.log('📊 Live: Vote cast event received');
+                    animateStatCard('votesCard', true);
+                    animateStatCard('votersCard', true);
+                    loadAdminDashboard();
+                    loadAdminResults();
+                    loadDashboardResults();
+                } else if (message.type === 'candidate-added') {
+                    console.log('📊 Live: Candidate added event received');
+                    animateStatCard('candidatesCard', true);
+                    loadAdminDashboard();
+                    loadAdminResults();
+                    loadDashboardResults();
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.log('WebSocket error (non-critical):', error);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected, retrying in 5 seconds...');
+                setTimeout(connectWebSocket, 5000);
+            };
+        }
+
+        // Auto-refresh statistics every 5 seconds
+        function startAutoRefresh() {
+            if (statsRefreshInterval) clearInterval(statsRefreshInterval);
+            statsRefreshInterval = setInterval(() => {
+                const token = localStorage.getItem('adminToken');
+                if (token && document.getElementById('adminDashboard').style.display !== 'none') {
+                    loadAdminDashboard();
+                    loadAdminResults();
+                    loadDashboardResults();
+                }
+            }, 5000);
+        }
+
+        // Login
+        document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showAdminError(data.message || 'Login failed');
+                    return;
+                }
+
+                adminToken = data.token;
+                localStorage.setItem('adminToken', adminToken);
+                
+                // Show dashboard
+                document.getElementById('adminLogin').style.display = 'none';
+                document.getElementById('adminDashboard').style.display = 'block';
+                
+                // Connect WebSocket
+                connectWebSocket();
+                
+                loadAdminDashboard();
+                loadAdminResults();
+                
+                // Start auto-refresh every 5 seconds
+                startAutoRefresh();
+            } catch (error) {
+                showAdminError('Connection error: ' + error.message);
+            }
+        });
+
+        async function loadAdminDashboard() {
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                document.getElementById('adminDashboard').style.display = 'none';
+                document.getElementById('adminLogin').style.display = 'block';
+                return;
+            }
+
+            try {
+                // Fetch statistics to show dashboard stats
+                const statsResponse = await fetch('http://localhost:5000/api/admin/statistics', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const statsData = await statsResponse.json();
+                
+                console.log('📊 Admin stats received at ' + getTimeString() + ':', statsData.statistics);
+                
+                if (statsResponse.ok && statsData.statistics) {
+                    const stats = statsData.statistics;
+                    const timeString = getTimeString();
+
+                    // Update Total Candidates
+                    const newCandidates = stats.totalCandidates || 0;
+                    if (newCandidates !== lastStatsValues.totalCandidates) {
+                        animateStatCard('candidatesCard', true);
+                        console.log('🔄 Candidates updated: ' + lastStatsValues.totalCandidates + ' → ' + newCandidates);
+                        lastStatsValues.totalCandidates = newCandidates;
+                    }
+                    document.getElementById('totalCandidatesAdmin').textContent = newCandidates;
+                    document.getElementById('candidatesTime').textContent = `Last updated: ${timeString}`;
+
+                    // Update Total Votes
+                    const newVotes = stats.totalVotes || 0;
+                    if (newVotes !== lastStatsValues.totalVotes) {
+                        animateStatCard('votesCard', true);
+                        console.log('🔄 Votes updated: ' + lastStatsValues.totalVotes + ' → ' + newVotes);
+                        lastStatsValues.totalVotes = newVotes;
+                    }
+                    document.getElementById('totalVotesAdmin').textContent = newVotes;
+                    document.getElementById('votesTime').textContent = `Last updated: ${timeString}`;
+
+                    // Update Registered Voters and calculate participation
+                    const totalVoters = stats.totalRegisteredVoters || 0;
+                    const votedVoters = stats.totalVotedVoters || 0;
+                    const participationPercent = totalVoters > 0 ? Math.round((votedVoters / totalVoters) * 100) : 0;
+                    
+                    if (totalVoters !== lastStatsValues.totalVoters) {
+                        animateStatCard('votersCard', true);
+                        console.log('🔄 Voters updated: ' + lastStatsValues.totalVoters + ' → ' + totalVoters);
+                        lastStatsValues.totalVoters = totalVoters;
+                    }
+                    document.getElementById('totalVotersAdmin').textContent = totalVoters;
+                    document.getElementById('voterParticipation').textContent = `Participation: ${votedVoters}/${totalVoters} (${participationPercent}%)`;
+                    document.getElementById('votersTime').textContent = `Last updated: ${timeString}`;
+
+                    // Update Voting Status
+                    const status = stats.votingStatus ? (stats.votingStatus.charAt(0).toUpperCase() + stats.votingStatus.slice(1)) : 'Inactive';
+                    if (status !== lastStatsValues.votingStatus) {
+                        animateStatCard('statusCard', true);
+                        console.log('🔄 Status updated: ' + lastStatsValues.votingStatus + ' → ' + status);
+                        lastStatsValues.votingStatus = status;
+                    }
+                    document.getElementById('votingStatusAdmin').textContent = status;
+                    
+                    // Update status subtitle
+                    const statusSubtitle = document.getElementById('statusSubtitle');
+                    if (status === 'Active') {
+                        statusSubtitle.textContent = '🟢 Voting is currently active';
+                    } else if (status === 'Ended') {
+                        statusSubtitle.textContent = '🔴 Voting has ended';
+                    } else {
+                        statusSubtitle.textContent = '⚪ Election has not started';
+                    }
+                    
+                    document.getElementById('statusTime').textContent = `Last updated: ${timeString}`;
+                }
+
+                // Load dashboard results panel and results tab
+                loadDashboardResults();
+                loadAdminResults();
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        async function loadDashboardResults() {
+            const token = localStorage.getItem('adminToken');
+            if (!token) return;
+
+            try {
+                // Fetch voting results
+                const resultsResponse = await fetch('http://localhost:5000/api/vote/results', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const resultsData = await resultsResponse.json();
+                
+                if (resultsResponse.ok && resultsData.results) {
+                    const resultsList = document.getElementById('dashboardResultsList');
+                    if (resultsList) {
+                        resultsList.innerHTML = '';
+                        
+                        if (resultsData.results.length === 0) {
+                            resultsList.innerHTML = '<div style="padding: 40px; text-align: center; color: #999;">No votes yet - Awaiting first vote</div>';
+                            return;
+                        }
+
+                        resultsData.results.forEach((result, index) => {
+                            const percentage = parseFloat(result.percentage) || 0;
+                            const isWinner = index === 0 && resultsData.totalVotes > 0;
+
+                            const resultItem = document.createElement('div');
+                            resultItem.style.cssText = 'padding: 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 20px; transition: all 0.3s ease;';
+                            resultItem.innerHTML = `
+                                <div style="font-size: 1.5em; font-weight: bold; color: #667eea; min-width: 50px; text-align: center;">#${index + 1}</div>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 1.2em; font-weight: bold; color: #333;">
+                                        ${result.symbol || '●'} ${result.name}
+                                        ${isWinner ? '<span style="background: #FFD700; color: #333; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; margin-left: 10px;">LEADING</span>' : ''}
+                                    </div>
+                                    <div style="color: #667eea; font-weight: 600; font-size: 0.9em;">${result.party}</div>
+                                    <div style="width: 100%; height: 10px; background: #eee; border-radius: 4px; overflow: hidden; margin-top: 10px;">
+                                        <div style="height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); width: ${Math.min(percentage, 100)}%; transition: width 0.5s ease;"></div>
+                                    </div>
+                                </div>
+                                <div style="text-align: right; min-width: 150px;">
+                                    <div style="font-size: 1.5em; font-weight: bold; color: #667eea;">${result.voteCount}</div>
+                                    <div style="color: #999; font-size: 0.9em;">${percentage.toFixed(2)}%</div>
+                                </div>
+                            `;
+
+                            // Add hover effect
+                            resultItem.onmouseenter = function() {
+                                this.style.backgroundColor = 'rgba(102, 126, 234, 0.05)';
+                            };
+                            resultItem.onmouseleave = function() {
+                                this.style.backgroundColor = 'transparent';
+                            };
+
+                            resultsList.appendChild(resultItem);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading dashboard results:', error);
+            }
+        }
+
+        async function loadAdminResults() {
+            const token = localStorage.getItem('adminToken');
+            if (!token) return;
+
+            try {
+                // Fetch voting results
+                const resultsResponse = await fetch('http://localhost:5000/api/vote/results', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const resultsData = await resultsResponse.json();
+                
+                if (resultsResponse.ok && resultsData.results) {
+                    const resultsList = document.getElementById('resultsList');
+                    if (resultsList) {
+                        resultsList.innerHTML = '';
+                        
+                        if (resultsData.results.length === 0) {
+                            resultsList.innerHTML = '<div style="padding: 40px; text-align: center; color: #999;">No votes yet</div>';
+                            return;
+                        }
+
+                        resultsData.results.forEach((result, index) => {
+                            const percentage = parseFloat(result.percentage) || 0;
+                            const isWinner = index === 0 && resultsData.totalVotes > 0;
+
+                            const resultItem = document.createElement('div');
+                            resultItem.style.cssText = 'padding: 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 20px;';
+                            resultItem.innerHTML = `
+                                <div style="font-size: 1.5em; font-weight: bold; color: #667eea; min-width: 50px; text-align: center;">#${index + 1}</div>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 1.2em; font-weight: bold; color: #333;">
+                                        ${result.symbol || '●'} ${result.name}
+                                        ${isWinner ? '<span style="background: #FFD700; color: #333; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; margin-left: 10px;">LEADING</span>' : ''}
+                                    </div>
+                                    <div style="color: #667eea; font-weight: 600; font-size: 0.9em;">${result.party}</div>
+                                    <div style="width: 100%; height: 8px; background: #eee; border-radius: 4px; overflow: hidden; margin-top: 10px;">
+                                        <div style="height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); width: ${Math.min(percentage, 100)}%;"></div>
+                                    </div>
+                                </div>
+                                <div style="text-align: right; min-width: 150px;">
+                                    <div style="font-size: 1.3em; font-weight: bold; color: #667eea;">${result.voteCount}</div>
+                                    <div style="color: #999; font-size: 0.9em;">${percentage}%</div>
+                                </div>
+                            `;
+
+                            resultsList.appendChild(resultItem);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading results:', error);
+            }
+        }
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active from buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Load results if results tab is clicked
+            if (tabName === 'results') {
+                loadAdminResults();
+            } else if (tabName === 'dashboard') {
+                // Refresh dashboard when tab is clicked
+                forceRefreshDashboard();
+            }
+        }
+
+        function openQrAdmin() {
+            window.open('http://localhost:3000/admin/dashboard', '_blank');
+        }
+
+        function reloadQrFrame() {
+            const frame = document.getElementById('qrAdminFrame');
+            if (frame) {
+                frame.src = frame.src;
+            }
+        }
+
+        function forceRefreshDashboard() {
+            console.log('🔄 Force refreshing dashboard...');
+            const token = localStorage.getItem('adminToken');
+            if (token) {
+                // Reset the cached values to force update
+                lastStatsValues = {
+                    totalCandidates: -1,
+                    totalVotes: -1,
+                    totalVoters: -1,
+                    votingStatus: ''
+                };
+                loadAdminDashboard();
+                loadDashboardResults();
+            }
+        }
+
+        async function resetVotingData() {
+            if (!confirm('⚠️ ARE YOU SURE? This will reset ALL votes and allow voters to vote again!\n\nClick OK to confirm.')) {
+                console.log('Reset cancelled');
+                return;
+            }
+
+            if (!confirm('⚠️ FINAL WARNING - This action CANNOT be undone!\n\nClick OK to permanently reset voting data.')) {
+                console.log('Reset cancelled');
+                return;
+            }
+
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                showSuccess('settingsSuccess', '❌ Error: Not authenticated');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/api/admin/reset-voting', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({})
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('settingsSuccess', '✅ Voting data reset successfully! All candidates have 0 votes and voters can vote again.');
+                    // Reset cache and refresh dashboard
+                    setTimeout(() => {
+                        forceRefreshDashboard();
+                    }, 1000);
+                } else {
+                    showSuccess('settingsSuccess', '❌ Error: ' + (data.message || 'Failed to reset voting data'));
+                }
+            } catch (error) {
+                showSuccess('settingsSuccess', '❌ Error: ' + error.message);
+            }
+        }
+
+        async function addCandidate(e) {
+            e.preventDefault();
+            const token = localStorage.getItem('adminToken');
+
+            const candidateName = document.getElementById('candidateName').value;
+            const partyName = document.getElementById('partyName').value;
+            const partySymbol = document.getElementById('partySymbol').value;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/admin/add-candidate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        name: candidateName,
+                        party: partyName,
+                        symbol: partySymbol
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('candidateSuccess', '✅ Candidate added successfully!');
+                    document.getElementById('addCandidateForm').reset();
+                    // Refresh dashboard and results
+                    loadAdminDashboard();
+                    loadAdminResults();
+                    loadDashboardResults();
+                } else {
+                    showSuccess('candidateSuccess', '❌ Error: ' + (data.message || 'Failed to add candidate'));
+                }
+            } catch (error) {
+                showSuccess('candidateSuccess', '❌ Error: ' + error.message);
+            }
+        }
+
+        async function setVotingSchedule(e) {
+            e.preventDefault();
+            const token = localStorage.getItem('adminToken');
+
+            const title = document.getElementById('electionTitle').value;
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/admin/set-voting-schedule', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ title, startTime, endTime })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('scheduleSuccess', '✅ Voting schedule set successfully!');
+                } else {
+                    showSuccess('scheduleSuccess', '❌ Error: ' + (data.message || 'Failed to set schedule'));
+                }
+            } catch (error) {
+                showSuccess('scheduleSuccess', '❌ Error: ' + error.message);
+            }
+        }
+
+        function adminLogout() {
+            localStorage.removeItem('adminToken');
+            if (ws) {
+                ws.close();
+            }
+            window.location.href = '/';
+        }
+
+        function showAdminError(message) {
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+            setTimeout(() => errorDiv.classList.remove('show'), 5000);
+        }
+
+        function showSuccess(elementId, message) {
+            const successDiv = document.getElementById(elementId);
+            successDiv.textContent = message;
+            successDiv.classList.add('show');
+            setTimeout(() => successDiv.classList.remove('show'), 5000);
+        }
+
+        // Check if already logged in
+        window.addEventListener('load', () => {
+            const token = localStorage.getItem('adminToken');
+            if (token) {
+                document.getElementById('adminLogin').style.display = 'none';
+                document.getElementById('adminDashboard').style.display = 'block';
+                adminToken = token;
+                connectWebSocket();
+                loadAdminDashboard();
+                loadAdminResults();
+                loadDashboardResults();
+                startAutoRefresh();
+            }
+        });
+    </script>
+</body>
+</html>
+

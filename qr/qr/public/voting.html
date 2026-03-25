@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Voting</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f8; }
+    .wrap { max-width: 760px; margin: 30px auto; padding: 20px; }
+    .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+    h1 { margin: 0 0 6px; }
+    .sub { color: #555; margin: 0 0 20px; }
+    .meta { background: #eef5ff; border: 1px solid #d4e4ff; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+    .cand { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; gap: 10px; align-items: center; }
+    .cand label { cursor: pointer; width: 100%; }
+    .actions { display: flex; gap: 10px; margin-top: 16px; }
+    button { border: none; background: #0b74de; color: #fff; padding: 10px 14px; border-radius: 8px; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .ghost { background: #666; }
+    .msg { margin-top: 10px; font-size: 14px; }
+    .err { color: #b00020; }
+    .ok { color: #0a7b35; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Cast Your Vote</h1>
+      <p class="sub">Select one candidate and submit.</p>
+
+      <div class="meta">
+        <div><strong>Voter:</strong> <span id="voterId">-</span></div>
+        <div><strong>Constituency:</strong> <span id="constituency">-</span></div>
+      </div>
+
+      <div id="candidateList"></div>
+
+      <div class="actions">
+        <button id="submitBtn" disabled onclick="submitVote()">Submit Vote</button>
+        <button class="ghost" onclick="window.location.href='/'">Cancel</button>
+      </div>
+
+      <div id="msg" class="msg"></div>
+    </div>
+  </div>
+
+  <script>
+    let votingToken = null;
+    let sessionId = null;
+    let selected = null;
+
+    async function init() {
+      const params = new URLSearchParams(window.location.search);
+      votingToken = params.get('token') || localStorage.getItem('votingToken') || localStorage.getItem('latestVotingToken');
+      sessionId = params.get('sessionId') || localStorage.getItem('latestSessionId');
+
+      // Preferred flow: use verified sessionId to get token internally
+      if (!votingToken && sessionId) {
+        const tRes = await fetch('/vote/session-token/' + encodeURIComponent(sessionId));
+        const tData = await tRes.json();
+        if (tRes.ok && tData.votingToken) {
+          votingToken = tData.votingToken;
+        }
+      }
+
+      if (!votingToken) {
+        show('No approved voter session found. Scan QR and get admin approval first.', true);
+        return;
+      }
+
+      try {
+        const infoRes = await fetch('/vote/voter-info', { headers: { Authorization: `Bearer ${votingToken}` } });
+        const info = await infoRes.json();
+        if (!infoRes.ok) throw new Error(info.error || 'Failed to load voter info');
+
+        document.getElementById('voterId').textContent = info.voterId;
+        document.getElementById('constituency').textContent = info.constituency;
+
+        const candRes = await fetch('/vote/candidates', { headers: { Authorization: `Bearer ${votingToken}` } });
+        const data = await candRes.json();
+        if (!candRes.ok) throw new Error(data.error || 'Failed to load candidates');
+
+        const el = document.getElementById('candidateList');
+        el.innerHTML = data.candidates.map(c => `
+          <div class="cand">
+            <input type="radio" name="cand" id="${c.id}" value="${c.id}" onchange="pick('${c.id}','${c.name}','${c.party}')">
+            <label for="${c.id}">
+              <strong>${c.name}</strong><br>
+              <span>${c.party}</span>
+            </label>
+          </div>
+        `).join('');
+      } catch (e) {
+        show(e.message, true);
+      }
+    }
+
+    function pick(id, name, party) {
+      selected = { id, name, party };
+      document.getElementById('submitBtn').disabled = false;
+    }
+
+    async function submitVote() {
+      if (!selected) return;
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      try {
+        const r = await fetch('/vote/cast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            votingToken,
+            candidateId: selected.id,
+            candidateName: selected.name,
+            partyName: selected.party
+          })
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Vote failed');
+
+        sessionStorage.setItem('voteReceipt', d.receipt || '');
+        show('Vote recorded successfully. Redirecting...', false);
+        setTimeout(() => { window.location.href = '/vote/success'; }, 900);
+      } catch (e) {
+        show(e.message, true);
+        btn.disabled = false;
+        btn.textContent = 'Submit Vote';
+      }
+    }
+
+    function show(text, isErr) {
+      const m = document.getElementById('msg');
+      m.className = 'msg ' + (isErr ? 'err' : 'ok');
+      m.textContent = text;
+    }
+
+    init();
+  </script>
+</body>
+</html>

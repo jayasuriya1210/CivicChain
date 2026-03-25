@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vote Monitor Dashboard</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f3f4f6; }
+    .wrap { max-width: 1100px; margin: 20px auto; padding: 0 14px; }
+    h1 { margin: 0 0 10px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .card { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 6px 18px rgba(0,0,0,.07); }
+    .kpi { font-size: 34px; font-weight: 700; color: #0b74de; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border-bottom: 1px solid #eee; padding: 8px 6px; text-align: left; }
+    th { background: #fafafa; }
+    .live { color: #0a7b35; font-weight: 600; }
+    @media (max-width: 900px) { .row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Vote Monitor Dashboard</h1>
+    <div class="live" id="liveState">Live: connecting...</div>
+
+    <div class="row" style="margin-top:12px;">
+      <div class="card">
+        <div>Total Votes</div>
+        <div class="kpi" id="totalVotes">0</div>
+      </div>
+      <div class="card">
+        <div>Top Candidate</div>
+        <div class="kpi" id="topCandidate" style="font-size:24px;">-</div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:16px;">
+      <div class="card">
+        <h3>Candidate Tally</h3>
+        <table>
+          <thead><tr><th>Candidate</th><th>Party</th><th>Votes</th></tr></thead>
+          <tbody id="candidateTbody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>Recent Votes</h3>
+        <table>
+          <thead><tr><th>Time</th><th>Voter</th><th>Candidate</th><th>Booth</th></tr></thead>
+          <tbody id="recentTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const socket = io();
+
+    socket.on('connect', () => {
+      document.getElementById('liveState').textContent = 'Live: connected';
+      socket.emit('join-dashboard', 'MONITOR-1');
+    });
+
+    socket.on('disconnect', () => {
+      document.getElementById('liveState').textContent = 'Live: disconnected';
+    });
+
+    socket.on('vote-cast', () => {
+      loadStats();
+      loadRecent();
+    });
+
+    async function loadStats() {
+      const r = await fetch('/vote/stats');
+      const d = await r.json();
+      if (!r.ok) return;
+
+      document.getElementById('totalVotes').textContent = d.totalVotes || 0;
+
+      const tbody = document.getElementById('candidateTbody');
+      const rows = d.candidateVotes || [];
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="3">No votes yet</td></tr>';
+        document.getElementById('topCandidate').textContent = '-';
+      } else {
+        tbody.innerHTML = rows.map(x => `<tr><td>${x.candidateName || x._id}</td><td>${x.partyName || '-'}</td><td>${x.votes}</td></tr>`).join('');
+        document.getElementById('topCandidate').textContent = rows[0].candidateName || rows[0]._id;
+      }
+    }
+
+    async function loadRecent() {
+      const r = await fetch('/vote/recent?limit=20');
+      const d = await r.json();
+      if (!r.ok) return;
+
+      const tbody = document.getElementById('recentTbody');
+      const rows = d.votes || [];
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="4">No votes yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = rows.map(v => {
+        const t = new Date(v.timestamp).toLocaleTimeString();
+        return `<tr><td>${t}</td><td>${v.voterId}</td><td>${v.candidateName || v.candidateId}</td><td>${v.boothId}</td></tr>`;
+      }).join('');
+    }
+
+    loadStats();
+    loadRecent();
+    setInterval(() => { loadStats(); loadRecent(); }, 5000);
+  </script>
+</body>
+</html>

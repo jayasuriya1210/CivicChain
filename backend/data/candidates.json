@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1771895191760,
+    "name": "RAM",
+    "party": "ADMK",
+    "symbol": "🍃",
+    "voteCount": 0,
+    "createdAt": "2026-02-24T01:06:31.760Z",
+    "createdBy": "admin"
+  },
+  {
+    "id": 1771895191761,
+    "name": "DHARANI A K",
+    "party": "BJP",
+    "symbol": "🪷",
+    "voteCount": 0,
+    "createdAt": "2026-02-24T01:06:31.760Z",
+    "createdBy": "admin"
+  },
+  {
+    "id": 1771895191762,
+    "name": "SARAVANAN",
+    "party": "DMK",
+    "symbol": "🌄",
+    "voteCount": 0,
+    "createdAt": "2026-02-24T01:06:31.760Z",
+    "createdBy": "admin"
+  },
+  {
+    "id": 1771949801226,
+    "name": "AADHIRA R",
+    "party": "TVK",
+    "symbol": "📯",
+    "voteCount": 0,
+    "createdAt": "2026-02-24T16:16:41.226Z",
+    "createdBy": "admin"
+  },
+  {
+    "id": 1771992243304,
+    "name": "RAVI MOHAN",
+    "party": "NTK",
+    "symbol": "🎤",
+    "voteCount": 0,
+    "createdAt": "2026-02-25T04:04:03.304Z",
+    "createdBy": "admin"
+  }
+]

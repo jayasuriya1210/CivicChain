@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voter Registration – QR Voting System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 560px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .logo p {
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full {
+            grid-column: 1/-1;
+        }
+
+        label {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        input,
+        select {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all .2s;
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        select option {
+            background: #1a1a2e;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .25s;
+            font-family: inherit;
+            margin-top: 24px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-top: 16px;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-error {
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid rgba(220, 53, 69, 0.4);
+            color: #ff8080;
+        }
+
+        .alert-success {
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid rgba(40, 167, 69, 0.4);
+            color: #8affb4;
+        }
+
+        .link-row {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.45);
+        }
+
+        .link-row a {
+            color: #a78bfa;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .link-row a:hover {
+            text-decoration: underline;
+        }
+
+        .steps {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 28px;
+        }
+
+        .step {
+            flex: 1;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background .3s;
+        }
+
+        .step.active {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <div class="logo">
+            <div class="badge">🗳️ OFFICIAL VOTER PORTAL</div>
+            <h1>Voter Registration</h1>
+            <p>Enter your details to register and get your QR code</p>
+        </div>
+        <div class="steps">
+            <div class="step active" id="s1"></div>
+            <div class="step" id="s2"></div>
+            <div class="step" id="s3"></div>
+        </div>
+
+        <div id="alertBox" class="alert"></div>
+
+        <div class="form-grid">
+            <div class="form-group full">
+                <label>Voter / Aadhaar ID</label>
+                <input id="voterId" type="text" placeholder="e.g. VOTER-TN-001 or Aadhaar no.">
+            </div>
+            <div class="form-group">
+                <label>Full Name</label>
+                <input id="name" type="text" placeholder="As per Aadhaar">
+            </div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input id="phone" type="tel" placeholder="10-digit mobile">
+            </div>
+            <div class="form-group">
+                <label>Email (optional)</label>
+                <input id="email" type="email" placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+                <label>Constituency</label>
+                <select id="constituency">
+                    <option value="">-- Select --</option>
+                    <option>Chennai Central</option>
+                    <option>Chennai North</option>
+                    <option>Chennai South</option>
+                    <option>Coimbatore</option>
+                    <option>Madurai</option>
+                    <option>Salem</option>
+                    <option>Trichy</option>
+                    <option>Tirunelveli</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Polling Booth ID</label>
+                <select id="boothId">
+                    <option value="">-- Select --</option>
+                    <option>BOOTH-CC-01</option>
+                    <option>BOOTH-CC-02</option>
+                    <option>BOOTH-CN-01</option>
+                    <option>BOOTH-CS-01</option>
+                    <option>BOOTH-CB-01</option>
+                </select>
+            </div>
+            <div class="form-group full">
+                <label>Photo URL (ID photo link)</label>
+                <input id="photoUrl" type="url" placeholder="https://example.com/photo.jpg"
+                    value="https://i.pravatar.cc/150">
+            </div>
+        </div>
+
+        <button class="btn btn-primary" id="registerBtn" onclick="register()">
+            Register &amp; Get QR Code
+        </button>
+
+        <div class="link-row">
+            Already registered? <a href="/">Login with Voter ID</a>
+            &nbsp;|&nbsp;
+            <a href="/admin/login">Admin Login</a>
+        </div>
+    </div>
+
+    <script>
+        async function register() {
+            const btn = document.getElementById('registerBtn');
+            const alert = document.getElementById('alertBox');
+            const fields = {
+                voterId: document.getElementById('voterId').value.trim(),
+                name: document.getElementById('name').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                photoUrl: document.getElementById('photoUrl').value.trim(),
+                constituency: document.getElementById('constituency').value,
+                boothId: document.getElementById('boothId').value
+            };
+
+            if (!fields.voterId || !fields.name || !fields.phone || !fields.constituency || !fields.boothId) {
+                showAlert('Please fill all required fields.', 'error'); return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Registering...';
+
+            try {
+                // Step 1: Register
+                const r1 = await fetch('/voter/register', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fields)
+                });
+                const d1 = await r1.json();
+                if (!r1.ok) { showAlert(d1.error, 'error'); btn.disabled = false; btn.textContent = 'Register & Get QR Code'; return; }
+
+                document.getElementById('s2').classList.add('active');
+
+                // Step 2: Generate QR
+                const r2 = await fetch('/qr/generate-qr', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ voterId: fields.voterId })
+                });
+                const d2 = await r2.json();
+                if (!r2.ok) { showAlert(d2.error, 'error'); btn.disabled = false; btn.textContent = 'Register & Get QR Code'; return; }
+
+                document.getElementById('s3').classList.add('active');
+                showAlert('✅ Registered successfully! Redirecting to your QR code...', 'success');
+
+                // Store and redirect
+                localStorage.setItem('voterId', fields.voterId);
+                localStorage.setItem('voterName', fields.name);
+                setTimeout(() => { window.location.href = '/qr/display?voterId=' + fields.voterId; }, 1400);
+            } catch (e) {
+                showAlert('Network error. Is the server running?', 'error');
+                btn.disabled = false; btn.textContent = 'Register & Get QR Code';
+            }
+        }
+
+        function showAlert(msg, type) {
+            const el = document.getElementById('alertBox');
+            el.textContent = msg;
+            el.className = 'alert show alert-' + type;
+        }
+    </script>
+</body>
+
+</html>
