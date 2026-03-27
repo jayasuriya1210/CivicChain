@@ -646,6 +646,13 @@
                 <p style="color:#333; margin-bottom: 12px;">
                     Use this panel to approve or reject QR verification requests.
                 </p>
+                <div class="success" id="qrQueueSuccess"></div>
+                <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px; flex-wrap:wrap;">
+                    <input type="text" id="removeQueueVoterId" placeholder="Voter ID to remove from queue" style="flex:1; min-width: 240px; margin:0; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                    <button onclick="removeFromQrQueue()" style="width:auto; padding: 10px 14px; border-radius: 8px; border: 1px solid #e5e7eb; background: #fff; color:#111; cursor: pointer;">
+                        Remove From Queue
+                    </button>
+                </div>
                 <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
                     <button onclick="openQrAdmin()" style="padding: 10px 14px; border-radius: 8px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer;">
                         Open QR Admin in New Tab
@@ -1057,6 +1064,31 @@
             const frame = document.getElementById('qrAdminFrame');
             if (frame) {
                 frame.src = frame.src;
+            }
+        }
+
+        async function removeFromQrQueue() {
+            const voterId = (document.getElementById('removeQueueVoterId').value || '').trim();
+            if (!voterId) {
+                showSuccess('qrQueueSuccess', '❌ Enter a voter ID first.');
+                return;
+            }
+            try {
+                const response = await fetch('http://localhost:3000/admin/remove-from-queue', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ voterId })
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    showSuccess('qrQueueSuccess', '❌ ' + (data.error || 'Failed to remove from queue'));
+                    return;
+                }
+                showSuccess('qrQueueSuccess', `✅ Removed from queue. Sessions cleared: ${data.removedSessions || 0}`);
+                document.getElementById('removeQueueVoterId').value = '';
+                reloadQrFrame();
+            } catch (error) {
+                showSuccess('qrQueueSuccess', '❌ ' + error.message);
             }
         }
 

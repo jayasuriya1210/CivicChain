@@ -218,14 +218,14 @@
 <body class="face-page">
     <div class="container">
         <div class="face-container">
-            <a href="/" class="back-button">← Back</a>
-            <h1>👤 Face Verification</h1>
+            <a href="/" class="back-button">Back</a>
+            <h1>Face Verification</h1>
             <p>Please verify your face to proceed with voting</p>
 
             <div class="camera-box">
                 <video id="cameraFeed" autoplay playsinline></video>
                 <div class="camera-placeholder" id="placeholder">
-                    📷
+                    Camera
                 </div>
             </div>
 
@@ -287,6 +287,10 @@
                 return;
             }
             const video = document.getElementById('cameraFeed');
+            if (!video.videoWidth || !video.videoHeight) {
+                showStatus('Camera is not ready yet. Wait 1-2 seconds and capture again.', 'error');
+                return;
+            }
             const canvas = document.createElement('canvas');
             
             canvas.width = video.videoWidth;
@@ -299,6 +303,12 @@
             
             document.getElementById('verifyBtn').disabled = false;
             showStatus('Photo captured successfully. Click "Verify Face" to verify.', 'success');
+        }
+
+        function canvasToBlob(canvas, type = 'image/png', quality = 0.95) {
+            return new Promise((resolve) => {
+                canvas.toBlob((blob) => resolve(blob), type, quality);
+            });
         }
 
         async function verifyFace() {
@@ -315,62 +325,55 @@
                 showStatus('Verifying face... <div class="loader"></div>', 'info');
                 document.getElementById('verifyBtn').disabled = true;
 
-                // Convert canvas to blob
-                capturedCanvas.toBlob(async (blob) => {
-                    const formData = new FormData();
-                    formData.append('faceImage', blob, 'face.png');
+                const blob = await canvasToBlob(capturedCanvas, 'image/png', 0.95);
+                if (!(blob instanceof Blob) || blob.size === 0) {
+                    showStatus('Could not prepare image from camera. Capture again and retry.', 'error');
+                    return;
+                }
 
-                    const token = localStorage.getItem('votingToken');
-                    const response = await fetch('http://localhost:5000/api/face/verify', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: formData
-                    });
+                const formData = new FormData();
+                formData.append('faceImage', blob, 'face.png');
 
-                    let data = null;
-                    try {
-                        data = await response.json();
-                    } catch (e) {
-                        data = null;
-                    }
-
-                    // Handle response statuses explicitly
-                    if (response.status === 200) {
-                        if (data && data.verified) {
-                            showStatus('✅ Face Verification Successful! Redirecting...', 'success');
-
-                            // Close camera
-                            if (stream) {
-                                stream.getTracks().forEach(track => track.stop());
-                            }
-
-                            // Redirect to voting page
-                            setTimeout(() => {
-                                window.location.href = '/vote.html';
-                            }, 1500);
-                        } else {
-                            showStatus('❌ ' + (data?.message || 'Face verification failed. Please try again.'), 'error');
-                            document.getElementById('verifyBtn').disabled = false;
-                        }
-                    } else if (response.status === 401) {
-                        // Unauthorized - face didn't match
-                        showStatus('❌ Invalid voter: face does not match the registered model.', 'error');
-                        document.getElementById('verifyBtn').disabled = false;
-                    } else if (response.status === 403) {
-                        showStatus('❌ Access denied: ' + (data?.message || 'Registration not allowed'), 'error');
-                        document.getElementById('verifyBtn').disabled = false;
-                    } else if (response.status === 503) {
-                        showStatus('⚠️ Face verification service unavailable. Try again later.', 'error');
-                        document.getElementById('verifyBtn').disabled = false;
-                    } else {
-                        showStatus('❌ Verification error: ' + (data?.message || response.statusText || 'Unknown error'), 'error');
-                        document.getElementById('verifyBtn').disabled = false;
-                    }
+                const token = localStorage.getItem('votingToken');
+                const response = await fetch('http://localhost:5000/api/face/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
                 });
+
+                let data = null;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    data = null;
+                }
+
+                if (response.status === 200) {
+                    if (data && data.verified) {
+                        showStatus('Face verification successful! Redirecting...', 'success');
+                        if (stream) {
+                            stream.getTracks().forEach(track => track.stop());
+                        }
+                        setTimeout(() => {
+                            window.location.href = '/vote.html';
+                        }, 1500);
+                    } else {
+                        showStatus((data?.message || 'Face verification failed. Please try again.'), 'error');
+                    }
+                } else if (response.status === 401) {
+                    showStatus('Invalid voter: face does not match the registered model.', 'error');
+                } else if (response.status === 403) {
+                    showStatus('Access denied: ' + (data?.message || 'Registration not allowed'), 'error');
+                } else if (response.status === 503) {
+                    showStatus('Face verification service unavailable. Try again later.', 'error');
+                } else {
+                    showStatus('Verification error: ' + (data?.message || response.statusText || 'Unknown error'), 'error');
+                }
             } catch (error) {
                 showStatus('Verification error: ' + error.message, 'error');
+            } finally {
                 document.getElementById('verifyBtn').disabled = false;
             }
         }
@@ -430,32 +433,43 @@
             }, 2000);
         }
 
+        async function syncFromApprovedSession(sessionId) {
+            if (!sessionId) return null;
+            try {
+                const qrResp = await fetch(`http://localhost:3000/booth/session-status/${encodeURIComponent(sessionId)}`);
+                const qrData = await qrResp.json();
+                if (!qrResp.ok || !qrData || qrData.status !== 'verified' || !qrData.voterId) {
+                    return null;
+                }
+
+                // Always align local auth with the approved voter session
+                const loginResp = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ voterId: qrData.voterId })
+                });
+                const loginData = await loginResp.json();
+                if (!loginResp.ok || !loginData.token) {
+                    return null;
+                }
+
+                localStorage.setItem('votingToken', loginData.token);
+                localStorage.setItem('voterId', qrData.voterId);
+                return loginData.token;
+            } catch (e) {
+                return null;
+            }
+        }
+
         window.addEventListener('load', async () => {
             let token = localStorage.getItem('votingToken');
             const params = new URLSearchParams(window.location.search);
             const sessionId = params.get('sessionId');
 
-            // If no token but sessionId provided, auto-login using QR session
-            if (!token && sessionId) {
-                try {
-                    const qrResp = await fetch(`http://localhost:3000/booth/session-status/${encodeURIComponent(sessionId)}`);
-                    const qrData = await qrResp.json();
-                    if (qrResp.ok && qrData.status === 'verified' && qrData.voterId) {
-                        const loginResp = await fetch('/api/auth/login', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ voterId: qrData.voterId })
-                        });
-                        const loginData = await loginResp.json();
-                        if (loginResp.ok && loginData.token) {
-                            localStorage.setItem('votingToken', loginData.token);
-                            localStorage.setItem('voterId', qrData.voterId);
-                            token = loginData.token;
-                        }
-                    }
-                } catch (e) {
-                    // fall through to redirect below
-                }
+            // If session is approved, force-sync token to that voter session
+            if (sessionId) {
+                const syncedToken = await syncFromApprovedSession(sessionId);
+                if (syncedToken) token = syncedToken;
             }
 
             if (!token) {
@@ -484,3 +498,4 @@
     </script>
 </body>
 </html>
+

@@ -4,6 +4,7 @@ const router = express.Router();
 const { verifyToken, voters } = require('../middleware/auth');
 const fs = require('fs');
 const path = require('path');
+const VOTE_COOLDOWN_MS = 5 * 60 * 1000;
 
 // Load candidates from file (persistent storage)
 const candidatesFile = path.join(__dirname, '..', 'data', 'candidates.json');
@@ -93,7 +94,16 @@ router.post('/cast-vote', verifyToken, async (req, res) => {
     }
 
     if (voter.hasVoted) {
-      return res.status(403).json({ message: 'You have already voted' });
+      const lastVotedAt = voter.votedAt ? new Date(voter.votedAt).getTime() : null;
+      const now = Date.now();
+      if (lastVotedAt && now - lastVotedAt < VOTE_COOLDOWN_MS) {
+        const waitSeconds = Math.ceil((VOTE_COOLDOWN_MS - (now - lastVotedAt)) / 1000);
+        return res.status(403).json({
+          message: `You have already voted. Try again after ${waitSeconds} seconds.`,
+          retryAfterSeconds: waitSeconds
+        });
+      }
+      voter.hasVoted = false;
     }
 
     // Reload candidates to get latest data
@@ -205,12 +215,24 @@ router.get('/voter-status', verifyToken, async (req, res) => {
       return res.status(404).json({ message: 'Voter not found' });
     }
 
+    let hasVoted = !!voter.hasVoted;
+    let retryAfterSeconds = 0;
+    if (hasVoted && voter.votedAt) {
+      const elapsed = Date.now() - new Date(voter.votedAt).getTime();
+      if (elapsed >= VOTE_COOLDOWN_MS) {
+        hasVoted = false;
+      } else {
+        retryAfterSeconds = Math.ceil((VOTE_COOLDOWN_MS - elapsed) / 1000);
+      }
+    }
+
     res.json({
       voterId: voter.voterId,
       isVerified: voter.isVerified,
       qrVerified: voter.qrVerified === true,
-      hasVoted: voter.hasVoted,
-      canVote: voter.qrVerified === true && voter.isVerified && !voter.hasVoted
+      hasVoted: hasVoted,
+      retryAfterSeconds: retryAfterSeconds,
+      canVote: voter.qrVerified === true && voter.isVerified && !hasVoted
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching voter status', error: error.message });

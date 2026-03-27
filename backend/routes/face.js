@@ -95,31 +95,14 @@ router.post('/verify', verifyToken, upload.single('faceImage'), async (req, res)
       }
     } catch (pythonError) {
       console.error('Python verification error:', pythonError?.message || pythonError);
-      // If face verification service returns 400 (no face detected), still accept voter if ID is valid
-      if (pythonError?.response?.status === 400) {
-        console.log('⚠ No face detected, but voter ID is valid. Allowing verification for voter:', req.user.voterId);
-        voter.isVerified = true;
-        try { saveVoters(); } catch (e) { console.warn('Could not save voters:', e.message); }
-        
-        // Clean up uploaded file
-        if (fs.existsSync(imagePath)) {
-          fs.unlinkSync(imagePath);
-        }
-        
-        return res.json({
-          message: 'Voter verified (face detection skipped)',
-          verified: true,
-          confidence: 0.8
-        });
-      }
-      
-      // For other errors (500+), service is unavailable
+      // On any python verification failure, do not auto-verify the voter.
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);
       }
-
-      return res.status(503).json({
-        message: 'Face verification service unavailable. Please try again later.',
+      const status = pythonError?.response?.status || 503;
+      const msg = pythonError?.response?.data?.message || 'Face verification failed. Invalid voter face.';
+      return res.status(status).json({
+        message: msg,
         verified: false
       });
     }
@@ -140,10 +123,11 @@ async function callFaceVerification(imagePath, voterId) {
     // 2. Python would load your model and verify face
     // 3. Return confidence score
     
+    const faceTimeoutMs = parseInt(process.env.FACE_VERIFY_TIMEOUT_MS || '210000', 10);
     const response = await axios.post('http://localhost:5001/verify-face', {
       imagePath: imagePath,
       voterId: voterId
-    }, { timeout: 30000 });
+    }, { timeout: faceTimeoutMs });
 
     return response.data;
   } catch (error) {

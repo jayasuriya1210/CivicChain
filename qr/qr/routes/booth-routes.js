@@ -4,6 +4,19 @@ const Voter = require('../models/Voter');
 const VerificationSession = require('../models/VerificationSession');
 const { verifyQRToken } = require('../utils/token-manager');
 const { generateSessionId, generateScannerId } = require('../utils/qr-helper');
+const VOTE_COOLDOWN_MS = 5 * 60 * 1000;
+
+function getLastVoteTime(voter) {
+  if (!voter || !voter.hasVoted) return null;
+  const updatedAt = voter.updatedAt ? new Date(voter.updatedAt).getTime() : null;
+  return Number.isFinite(updatedAt) ? updatedAt : null;
+}
+
+function isWithinVoteCooldown(voter) {
+  const last = getLastVoteTime(voter);
+  if (!last) return false;
+  return Date.now() - last < VOTE_COOLDOWN_MS;
+}
 
 /**
  * Handle QR scan at polling station
@@ -44,8 +57,8 @@ router.post('/scan-qr', async (req, res) => {
       return res.status(404).json({ error: 'Voter not found' });
     }
 
-    if (voter.hasVoted) {
-      return res.status(403).json({ error: 'Voter has already cast vote' });
+    if (voter.hasVoted && isWithinVoteCooldown(voter)) {
+      return res.status(403).json({ error: 'Voter has already cast vote in last 5 minutes' });
     }
 
     if (voter.status === 'rejected') {

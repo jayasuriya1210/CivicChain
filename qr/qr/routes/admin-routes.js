@@ -262,4 +262,41 @@ router.post('/reset-qr', async (req, res) => {
   }
 });
 
+/**
+ * Remove one voter/session from QR verification queue
+ * POST /admin/remove-from-queue
+ * Body: { voterId?: string, sessionId?: string }
+ */
+router.post('/remove-from-queue', async (req, res) => {
+  try {
+    const { voterId, sessionId } = req.body || {};
+    if (!voterId && !sessionId) {
+      return res.status(400).json({ error: 'voterId or sessionId is required' });
+    }
+
+    const filter = sessionId
+      ? { sessionId, status: { $in: ['pending', 'verified', 'voting'] } }
+      : { voterId, status: { $in: ['pending', 'verified', 'voting'] } };
+
+    const result = await VerificationSession.deleteMany(filter);
+    const targetVoterId = voterId || null;
+
+    if (targetVoterId) {
+      await Voter.updateOne(
+        { voterId: targetVoterId },
+        { $set: { status: 'registered' } }
+      );
+    }
+
+    res.json({
+      success: true,
+      message: 'Queue entry removed successfully',
+      removedSessions: result?.deletedCount || 0
+    });
+  } catch (error) {
+    console.error('Error removing queue entry:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
