@@ -1,4 +1,4 @@
-# Mini Voting System - Decentralized Voting with Face Verification
+# CivicChain - Decentralized Voting with Face Verification
 
 A complete decentralized voting system using blockchain (Ethereum) and face recognition for voter authentication. Built for Indian election system with multi-factor authentication.
 
@@ -16,7 +16,7 @@ A complete decentralized voting system using blockchain (Ethereum) and face reco
 ## 📁 Project Structure
 
 ```
-mini voting/
+CivicChain/
 ├── blockchain/
 │   ├── contracts/
 │   │   └── Voting.sol
@@ -107,7 +107,7 @@ Open **Terminal 2** - Blockchain Deployment:
 
 ```powershell
 # Navigate to blockchain folder
-cd "c:\Users\Shreenithi\OneDrive\Documents\mini voting\blockchain"
+cd "c:\Users\Shreenithi\OneDrive\Documents\CivicChain\blockchain"
 
 # Install Truffle dependencies
 npm install
@@ -128,7 +128,7 @@ Open **Terminal 3** - Backend Server:
 
 ```powershell
 # Navigate to backend folder
-cd "c:\Users\Shreenithi\OneDrive\Documents\mini voting\backend"
+cd "c:\Users\Shreenithi\OneDrive\Documents\CivicChain\backend"
 
 # Install Node.js dependencies
 npm install
@@ -147,7 +147,7 @@ Open **Terminal 4** - Python Face Service:
 
 ```powershell
 # Navigate to face_model folder
-cd "c:\Users\Shreenithi\OneDrive\Documents\mini voting\backend\face_model"
+cd "c:\Users\Shreenithi\OneDrive\Documents\CivicChain\backend\face_model"
 
 # Create Python virtual environment (recommended)
 python -m venv venv
@@ -168,7 +168,7 @@ Open **Terminal 5** - Frontend (Simple HTTP Server):
 
 ```powershell
 # Navigate to frontend folder
-cd "c:\Users\Shreenithi\OneDrive\Documents\mini voting\frontend"
+cd "c:\Users\Shreenithi\OneDrive\Documents\CivicChain\frontend"
 
 # Option A: Python built-in server
 python -m http.server 8000
@@ -282,7 +282,7 @@ The system will automatically load and use them for verification.
 
 ```env
 PORT=5000
-JWT_SECRET=mini_voting_system_secret_key_change_in_production_2024
+JWT_SECRET=civicchain_secret_key_change_in_production_2024
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin@123
 GANACHE_HOST=127.0.0.1
@@ -450,4 +450,4 @@ This system follows Indian election standards:
 
 **Happy Voting! 🗳️**
 
-Created for secure, transparent, and tamper-proof digital voting.
+Created for secure, transparent, and tamper-proof digital voting with CivicChain.
