@@ -107,7 +107,7 @@ Open **Terminal 2** - Blockchain Deployment:
 
 ```powershell
 # Navigate to blockchain folder
-cd "c:\Users\Shreenithi\OneDrive\Documents\CivicChain\blockchain"
+cd /path/to/CivicChain/blockchain
 
 # Install Truffle dependencies
 npm install
@@ -128,7 +128,7 @@ Open **Terminal 3** - Backend Server:
 
 ```powershell
 # Navigate to backend folder
-cd "c:\Users\Shreenithi\OneDrive\Documents\CivicChain\backend"
+cd /path/to/CivicChain/backend
 
 # Install Node.js dependencies
 npm install
@@ -147,7 +147,7 @@ Open **Terminal 4** - Python Face Service:
 
 ```powershell
 # Navigate to face_model folder
-cd "c:\Users\Shreenithi\OneDrive\Documents\CivicChain\backend\face_model"
+cd /path/to/CivicChain/backend/face_model
 
 # Create Python virtual environment (recommended)
 python -m venv venv
@@ -168,7 +168,7 @@ Open **Terminal 5** - Frontend (Simple HTTP Server):
 
 ```powershell
 # Navigate to frontend folder
-cd "c:\Users\Shreenithi\OneDrive\Documents\CivicChain\frontend"
+cd /path/to/CivicChain/frontend
 
 # Option A: Python built-in server
 python -m http.server 8000
